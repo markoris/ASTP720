@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 plt.rc('font', size=30)
+plt.rc('lines', linewidth=4)
 
 def pseudo_iso_sphere_unitless(x):
 	'''
@@ -38,13 +39,15 @@ for threshold in thresholds:
 		iters_b = iters_bisect # if no array, create something to append to if on the first iteration
 		iters_n = iters_newton
 		iters_s = iters_secant
-plt.scatter(np.flip(thresholds), iters_b, color='r', label='Bisection')
-plt.scatter(np.flip(thresholds), iters_n, color='b', label='Newton')
-plt.scatter(np.flip(thresholds), iters_s, color='g', label='Secant')
+plt.scatter(thresholds, iters_b, s=900, color='r', label='Bisection')
+plt.scatter(thresholds, iters_n, s=900, color='b', label='Newton')
+plt.scatter(thresholds, iters_s, s=900, color='g', label='Secant')
 plt.legend()
+plt.title('Root-finding iterations as a function of threshold value for 3 algorithms')
 plt.xlabel('Threshold')
 plt.ylabel('Iterations until sub-threshold')
 plt.xscale('log')
+plt.gca().set_xlim(1, 1e-11)
 plt.show()
 
 # --- End of Task 2 ---
@@ -125,7 +128,7 @@ import numpy as np
 
 xs, ys = np.loadtxt('lens_density.txt', unpack=True, delimiter=',') # load training data into x and y arrays
 
-plt.scatter(xs, ys, color='k', label='Training data') # plot training data, color black to differentiate from interpolated data
+plt.scatter(xs, ys, color='k', s=900, label='Training data') # plot training data, color black to differentiate from interpolated data
 
 for idx in range(len(xs)-1): # length of data points - 1 since there are n-1 consecutive pairs of n data points
 	interp = linterp.linear_interpolator(xs[idx], xs[idx+1], ys[idx], ys[idx+1]) # train interpolator using (x0, y0), (x1, y1)
@@ -137,7 +140,7 @@ for idx in range(len(xs)-1): # length of data points - 1 since there are n-1 con
 		xps = xp # if array not yet created, use first value as the starting point
 		interps = interp(xp) 
 
-plt.scatter(xps, interps, color='r', label='Interpolated data') # plot interpolated data at interpolated points
+plt.scatter(xps, interps, color='r', s=900, label='Interpolated data') # plot interpolated data at interpolated points
 plt.legend()
 plt.title('Interpolation of column density as a function of position in lens plane')
 plt.xlabel('Position in lens plane')
