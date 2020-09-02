@@ -19,15 +19,15 @@ def bisection(func, lower, upper, eps=1e-8, verbose=False, iters=0):
 	root = (lower+upper)/2.
 	func_root = func(root)
 
-	if abs(func_root) < eps:
+	if abs(func_root) < eps: # if within the threshold, stop searching for new roots
 		if verbose: 
 			print("Root found at %.16f after %d iterations." % (root, iters))
 			return root, iters
 		return root
 
 	iters += 1
-	if func_lower*func_root < 0: return bisection(func, lower, root, eps, verbose, iters)
-	else: return bisection(func, root, upper, eps, verbose, iters)
+	if func_lower*func_root < 0: return bisection(func, lower, root, eps, verbose, iters) # if f(a)f(c) < 0, then root must be between a and c
+	else: return bisection(func, root, upper, eps, verbose, iters) # otherwise, root must be between c and b
 
 def newton(func, func_deriv, root, eps=1e-8, verbose=False, iters=0):
 	'''
@@ -47,13 +47,13 @@ def newton(func, func_deriv, root, eps=1e-8, verbose=False, iters=0):
 		Number of algorithm iterations required to find the root to within the threshold value.
 	'''
 	func_root = func(root)
-	if abs(func_root) < eps:
+	if abs(func_root) < eps: # if within the threshold, stop searching for new roots
 		if verbose: 
 			print("Root found at %.16f after %d iterations." % (root, iters))
 			return root, iters
 		return root
 #	else:
-	next_root = lambda x: x - float(func(x))/float(func_deriv(x))
+	next_root = lambda x: x - float(func(x))/float(func_deriv(x)) # function finding the next guess of where the root might be according to Newton's method
 	iters += 1
 	return newton(func, func_deriv, next_root(root), eps, verbose, iters)
 
@@ -74,11 +74,11 @@ def secant(func, lower, upper, eps=1e-8, verbose=False, iters=0):
 	iters: int
 		Number of algorithm iterations required to find the root to within the threshold value.
 	'''
-	func_lower, func_upper = func(lower), func(upper)
-	next_root = lambda x_im1, x_i: x_i - func(x_i)*(x_i - x_im1)/float(func(x_i)-func(x_im1))
+	func_lower, func_upper = func(lower), func(upper) # finding lower and upper bound function values
+	next_root = lambda x_im1, x_i: x_i - func(x_i)*(x_i - x_im1)/float(func(x_i)-func(x_im1)) # function finding the next guess of where the root might be according to secant method
 	root = next_root(lower, upper)
 	func_root = func(root)
-	if abs(func_root) < eps:
+	if abs(func_root) < eps: # if within the threshold, stop searching for new roots
 		if verbose: 
 			print("Root found at %.16f after %d iterations." % (root, iters))
 			return root, iters
