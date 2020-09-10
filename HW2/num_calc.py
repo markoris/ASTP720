@@ -1,4 +1,4 @@
-def num_deriv(func, xs):
+def symm_deriv(func, xs):
 	'''
 	Symmetric numerical derivative of form (y_{i+1} - y{i-1})/(x_{i+1}-x_{i-1}), where the spacing
 	between sequential x values need not be uniform. Returns a derivative array of n-2 values, where
