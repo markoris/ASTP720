@@ -7,7 +7,7 @@ def xsq(x):
 
 xs = np.linspace(1, 10, 10)
 
-print(nc.num_deriv(xsq, xs))
+print(nc.symm_deriv(xsq, xs))
 print(nc.riemann_integral(xsq, xs, left=True))
 print(nc.riemann_integral(xsq, xs, right=True))
 print(nc.riemann_integral(xsq, xs, midpoint=True))
@@ -58,3 +58,12 @@ a.invert()
 b.mult(a)
 
 print(b.values)
+
+a = mat.Matrix(3, 3)
+a.populate([2, -1, -2, -4, 6, 3, -4, -2, 8])
+
+print('det = ', a.determinant())
+
+b = mat.Matrix(5, 5)
+b.populate(np.linspace(1, 25, 25))
+print(b.determinant())

@@ -120,23 +120,19 @@ class Matrix(object):
 
 	def determinant(self):
 
-		if self.n_rows != self.n_cols:
-			print('Matrix is not square and therefore inversion has been canceled.')
-			pass
-		identity = np.identity(self.n_rows)
+		import numpy as np
 
-		product = 1
+		def minor(values, row_lim, col_lim):
+		    return np.array([np.hstack((row[:col_lim], row[col_lim+1:])) for row in np.vstack((values[:row_lim], values[row_lim+1:]))])
+		
+		def recursive_det(values):
 
-		for row in range(self.n_rows):
-			for col in range(row+1):
-				if row != 0:
-					identity[row, col] -= self.values[row, col]*identity[row-1, col] # works through Gaussian elimination, assumes that matrix has inverse to calculate determinant
-					self.values[row, col] -= self.values[row, col]*self.values[row-1, col] # not generally applicable, needs refining
-				if row != col: 
-					continue
-				identity[row, :] /= self.values[row, col]
-				product /= self.values[row, col]
-				self.values[row, :] /= self.values[row, col]
+			if values.shape[0] == 2:
+			    return values[0, 0]*values[1, 1] - values[0, 1]*values[1, 0]
+			
+			det = 0
+			for col in range(values.shape[0]):
+			    det += ((-1)**col)*values[0, col]*recursive_det(minor(values, 0, col))
+			return det
 
-		print(1./product)
-		pass
+		return recursive_det(self.values)
