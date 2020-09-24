@@ -1,5 +1,4 @@
 import sys
-#sys.path.append('../HW3/')
 import odes
 import numpy as np
 import matplotlib.pyplot as plt
@@ -32,10 +31,6 @@ plt.ylabel('Mass (M_sun)')
 plt.legend(fontsize='small')
 plt.show()
 
-#plt.plot(rs, ys[np.linspace(0, 19998, 10000).astype(int)])
-#plt.plot(rs, ys[np.linspace(1, 19999, 10000).astype(int)])
-#plt.show()
-
 # --- End of Task 1 ---
 
 # --- Start of Task 2 ---
@@ -63,16 +58,6 @@ plt.ylabel('Mass (M_sun)')
 plt.legend(fontsize='small')
 plt.show()
 
-#radii = np.linspace(1e-2, 2e6+1e-2, 10) # cm
-#
-#rs, ys = odes.rk4(hydro_eq_ns, radii, np.array([5.4e9*((1e15))**(5./3), 1e-6]), dt=1e3)
-#
-#print(rs.shape, ys.shape)
-
-#plt.plot(rs, ys[np.linspace(0, 3998, 2000).astype(int)])
-#plt.plot(rs, ys[np.linspace(1, 3999, 2000).astype(int)])
-#plt.show()
-
 # --- End of Task 2 ---
 #
 # --- Start of Task 3 ---
@@ -88,7 +73,7 @@ def hydro_eq_tov(r, variables):
 
 radii = np.linspace(1e-2, 1.302e6+1e-2, 10) # cm, going out to 13.02 km to get the mass of the neutron star
 
-rs, ys = odes.rk4(hydro_eq_tov, radii, np.array([5.4e9*((1.03e15))**(5./3), 1e-12]), dt=1e3) # using density inferred from task 2 M-R curve
+rs, ys = odes.rk4(hydro_eq_tov, radii, np.array([5.4e9*((1e15))**(5./3), 1e-12]), dt=1e3) # using density inferred from task 2 M-R curve
 
 print(rs.shape[0], rs[-1]/1e5, ys[-1]/1.989e33)
 
