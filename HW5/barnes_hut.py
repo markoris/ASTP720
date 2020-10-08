@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 class Node:
-	def __init__(self, xmin, xmax, ymin, ymax, divs, particles):
+	def __init__(self, xmin, xmax, ymin, ymax, divs, particles, parent):
 
 		self.xmin = xmin
 		self.xmax = xmax
@@ -13,6 +13,8 @@ class Node:
 		self.particles = particles
 		self.children = []
 		self.leaf = False
+		self.com = 0
+		self.parent = parent
 
 	def subgrid(self):
 
@@ -37,7 +39,7 @@ class Node:
 		nw_idxs = np.logical_and(nw_idxs_x, nw_idxs_y)
 		nw_particles = self.particles[nw_idxs, :]
 #		print(nw_particles.shape)
-		nw = Node(nw_xmin, nw_xmax, nw_ymin, nw_ymax, nw_divs, nw_particles)
+		nw = Node(nw_xmin, nw_xmax, nw_ymin, nw_ymax, nw_divs, nw_particles, self)
 		self.children.append(nw)
 #		print('nw', nw_xmin, nw_xmax, nw_ymin, nw_ymax)
 
@@ -53,7 +55,7 @@ class Node:
 		ne_idxs = np.logical_and(ne_idxs_x, ne_idxs_y)
 		ne_particles = self.particles[ne_idxs, :]
 #		print(ne_particles.shape)
-		ne = Node(ne_xmin, ne_xmax, ne_ymin, ne_ymax, ne_divs, ne_particles)
+		ne = Node(ne_xmin, ne_xmax, ne_ymin, ne_ymax, ne_divs, ne_particles, self)
 		self.children.append(ne)
 #		print('ne', ne_xmin, ne_xmax, ne_ymin, ne_ymax)
 
@@ -69,7 +71,7 @@ class Node:
 		se_idxs = np.logical_and(se_idxs_x, se_idxs_y)
 		se_particles = self.particles[se_idxs, :]
 #		print(se_particles.shape)
-		se = Node(se_xmin, se_xmax, se_ymin, se_ymax, se_divs, se_particles)
+		se = Node(se_xmin, se_xmax, se_ymin, se_ymax, se_divs, se_particles, self)
 		self.children.append(se)
 #		print('se', se_xmin, se_xmax, se_ymin, se_ymax)
 
@@ -85,7 +87,7 @@ class Node:
 		sw_idxs = np.logical_and(sw_idxs_x, sw_idxs_y)
 		sw_particles = self.particles[sw_idxs, :]
 #		print(sw_particles.shape)
-		sw = Node(sw_xmin, sw_xmax, sw_ymin, sw_ymax, sw_divs, sw_particles)
+		sw = Node(sw_xmin, sw_xmax, sw_ymin, sw_ymax, sw_divs, sw_particles, self)
 		self.children.append(sw)
 #		print('sw', sw_xmin, sw_xmax, sw_ymin, sw_ymax)
 		
@@ -93,6 +95,8 @@ class Node:
 		ne.subgrid()
 		se.subgrid()
 		sw.subgrid()
+
+		return
 
 	def find_leaves(self, n):
 		out = n
@@ -112,19 +116,9 @@ x0, y0 = coords[:, 0], coords[:, 1] # units of Mpc
 
 print(x0.shape)
 
-box = Node(0, 10, 0, 10, 0, np.array([x0, y0]).T)
+box = Node(0, 10, 0, 10, 0, np.array([x0, y0]).T, None)
 
 box.subgrid()
 
 out = box.find_leaves(0)
 print(out)
-
-# start with simulation box
-
-#print(x0[:10], y0[:10])
-
-#xiter1 = x0[np.logical_and(x0<xmin, y0<ymin)] # this is how to decide when to stop making further nodes
-#yiter1 = y0[np.logical_and(x0<xmin, y0<ymin)] # if yields 0, stop making nodes until yields 1
-
-# cut into 4s (8s?)
-#sb1 = Node("sb1", parent=box, M=1e12, x=7.5, y=7.5) # this will be reformatted to produce child nodes based on how many particles in any given box
