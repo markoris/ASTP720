@@ -16,7 +16,10 @@ class Node:
 
 	def subgrid(self):
 
-		if self.particles.shape[0] == 1 or self.particles.shape[0] == 0:
+		if self.particles.shape[0] == 0:
+			return
+
+		if self.particles.shape[0] == 1:
 			self.leaf = True
 			return
 
@@ -33,10 +36,10 @@ class Node:
 		nw_idxs_y = np.logical_and(self.particles[:, 1] < nw_ymax, self.particles[:, 1] > nw_ymin)
 		nw_idxs = np.logical_and(nw_idxs_x, nw_idxs_y)
 		nw_particles = self.particles[nw_idxs, :]
-		print(nw_particles.shape)
+#		print(nw_particles.shape)
 		nw = Node(nw_xmin, nw_xmax, nw_ymin, nw_ymax, nw_divs, nw_particles)
 		self.children.append(nw)
-		print('nw', nw_xmin, nw_xmax, nw_ymin, nw_ymax)
+#		print('nw', nw_xmin, nw_xmax, nw_ymin, nw_ymax)
 
 		ne_divs = self.divs+1
 #		ne_xmin = self.xmax - self.xmax/(2.)
@@ -49,10 +52,10 @@ class Node:
 		ne_idxs_y = np.logical_and(self.particles[:, 1] < ne_ymax, self.particles[:, 1] > ne_ymin)
 		ne_idxs = np.logical_and(ne_idxs_x, ne_idxs_y)
 		ne_particles = self.particles[ne_idxs, :]
-		print(ne_particles.shape)
+#		print(ne_particles.shape)
 		ne = Node(ne_xmin, ne_xmax, ne_ymin, ne_ymax, ne_divs, ne_particles)
 		self.children.append(ne)
-		print('ne', ne_xmin, ne_xmax, ne_ymin, ne_ymax)
+#		print('ne', ne_xmin, ne_xmax, ne_ymin, ne_ymax)
 
 		se_divs = self.divs+1
 #		se_xmin = self.xmax - self.xmax/(2.)
@@ -65,10 +68,10 @@ class Node:
 		se_idxs_y = np.logical_and(self.particles[:, 1] < se_ymax, self.particles[:, 1] > se_ymin)
 		se_idxs = np.logical_and(se_idxs_x, se_idxs_y)
 		se_particles = self.particles[se_idxs, :]
-		print(se_particles.shape)
+#		print(se_particles.shape)
 		se = Node(se_xmin, se_xmax, se_ymin, se_ymax, se_divs, se_particles)
 		self.children.append(se)
-		print('se', se_xmin, se_xmax, se_ymin, se_ymax)
+#		print('se', se_xmin, se_xmax, se_ymin, se_ymax)
 
 		sw_divs = self.divs+1
 		sw_xmin = self.xmin
@@ -81,10 +84,10 @@ class Node:
 		sw_idxs_y = np.logical_and(self.particles[:, 1] < sw_ymax, self.particles[:, 1] > sw_ymin)
 		sw_idxs = np.logical_and(sw_idxs_x, sw_idxs_y)
 		sw_particles = self.particles[sw_idxs, :]
-		print(sw_particles.shape)
+#		print(sw_particles.shape)
 		sw = Node(sw_xmin, sw_xmax, sw_ymin, sw_ymax, sw_divs, sw_particles)
 		self.children.append(sw)
-		print('sw', sw_xmin, sw_xmax, sw_ymin, sw_ymax)
+#		print('sw', sw_xmin, sw_xmax, sw_ymin, sw_ymax)
 		
 		nw.subgrid()
 		ne.subgrid()
@@ -92,12 +95,14 @@ class Node:
 		sw.subgrid()
 
 	def find_leaves(self, n):
+		out = n
 		if self.leaf == True:
+#			print(self.particles)
 			return n+1
 		if len(self.children) == 0:
 			pass
 		for child in self.children:
-			out = child.find_leaves(n)
+			out += child.find_leaves(n)
 		return out
 
 
@@ -105,14 +110,14 @@ coords = np.load('galaxies0.npy')
 
 x0, y0 = coords[:, 0], coords[:, 1] # units of Mpc
 
+print(x0.shape)
+
 box = Node(0, 10, 0, 10, 0, np.array([x0, y0]).T)
 
 box.subgrid()
 
 out = box.find_leaves(0)
 print(out)
-
-print(box.children)
 
 # start with simulation box
 
