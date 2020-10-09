@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 class Node:
-	def __init__(self, xmin, xmax, ymin, ymax, divs, particles, parent):
+	def __init__(self, xmin, xmax, ymin, ymax, divs, particles):
 
 		self.xmin = xmin
 		self.xmax = xmax
@@ -13,7 +13,8 @@ class Node:
 		self.particles = particles
 		self.children = []
 		self.leaf = False
-		self.parent = parent
+		self.mass = 1e12
+		self.accel = 0
 
 		if self.particles.shape[0] == 0:
 			x_com, y_com = 0, 0
@@ -47,7 +48,7 @@ class Node:
 		nw_idxs = np.logical_and(nw_idxs_x, nw_idxs_y)
 		nw_particles = self.particles[nw_idxs, :]
 #		print(nw_particles.shape)
-		nw = Node(nw_xmin, nw_xmax, nw_ymin, nw_ymax, nw_divs, nw_particles, self)
+		nw = Node(nw_xmin, nw_xmax, nw_ymin, nw_ymax, nw_divs, nw_particles)
 		self.children.append(nw)
 #		print('nw', nw_xmin, nw_xmax, nw_ymin, nw_ymax)
 
@@ -63,7 +64,7 @@ class Node:
 		ne_idxs = np.logical_and(ne_idxs_x, ne_idxs_y)
 		ne_particles = self.particles[ne_idxs, :]
 #		print(ne_particles.shape)
-		ne = Node(ne_xmin, ne_xmax, ne_ymin, ne_ymax, ne_divs, ne_particles, self)
+		ne = Node(ne_xmin, ne_xmax, ne_ymin, ne_ymax, ne_divs, ne_particles)
 		self.children.append(ne)
 #		print('ne', ne_xmin, ne_xmax, ne_ymin, ne_ymax)
 
@@ -79,7 +80,7 @@ class Node:
 		se_idxs = np.logical_and(se_idxs_x, se_idxs_y)
 		se_particles = self.particles[se_idxs, :]
 #		print(se_particles.shape)
-		se = Node(se_xmin, se_xmax, se_ymin, se_ymax, se_divs, se_particles, self)
+		se = Node(se_xmin, se_xmax, se_ymin, se_ymax, se_divs, se_particles)
 		self.children.append(se)
 #		print('se', se_xmin, se_xmax, se_ymin, se_ymax)
 
@@ -95,7 +96,7 @@ class Node:
 		sw_idxs = np.logical_and(sw_idxs_x, sw_idxs_y)
 		sw_particles = self.particles[sw_idxs, :]
 #		print(sw_particles.shape)
-		sw = Node(sw_xmin, sw_xmax, sw_ymin, sw_ymax, sw_divs, sw_particles, self)
+		sw = Node(sw_xmin, sw_xmax, sw_ymin, sw_ymax, sw_divs, sw_particles)
 		self.children.append(sw)
 #		print('sw', sw_xmin, sw_xmax, sw_ymin, sw_ymax)
 		
@@ -117,17 +118,81 @@ class Node:
 			out += child.find_leaves(n)
 		return out
 
-coords = np.load('galaxies0.npy')
+	def return_leaves(self, leaves):
+		out = leaves
+		if self.leaf == True:
+#			print(self.particles)
+			return np.append(leaves, self)
+		if len(self.children) == 0:
+			pass
+		for child in self.children:
+			out = np.append(out, child.return_leaves(leaves))
+		return out
 
-x0, y0 = coords[:, 0], coords[:, 1] # units of Mpc
+	def accel_calc(self):
+		leaves = self.return_leaves(np.array([]))
+		G = 4.301e-3 * (3.241e-14*3.154e7)**2 # pc M_sun^-1 pc/yr
+		eps = 1e-3 # Plummer radius for force softening
+		for alpha in range(leaves.shape[0]):
+			ax = 0
+			ay = 0
+			for beta in range(leaves.shape[0]):
+				if alpha == beta: continue
+				r = (leaves[beta].particles[0] - leaves[alpha].particles[0]) * 1e6 #* 3.086e13 # Mpc to pc to km
+				ax += G * leaves[beta].mass * (-1/np.sqrt(np.abs(r[0] + eps)))*(r[0])/(np.abs(r[0])**2)
+				ay += G * leaves[beta].mass * (-1/np.sqrt(np.abs(r[1] + eps)))*(r[1])/(np.abs(r[1])**2)
+				leaves[alpha].accel = np.array([ax, ay])
+		return leaves
 
-print(x0.shape)
+def verlet(x0, x1, y0, y1, t, nodes):
+	x_next = np.zeros_like(x0)
+	y_next = np.zeros_like(y0)
+	for node in range(len(x0)):
+		x_next[node] = 2*x1[node] - x0[node] + t**2*nodes[node].accel[0]
+		y_next[node] = 2*y1[node] - y0[node] + t**2*nodes[node].accel[1]
+	return x_next, y_next
 
-box = Node(0, 10, 0, 10, 0, np.array([x0, y0]).T, None)
+coords0 = np.load('galaxies0.npy')
+coords1 = np.load('galaxies1.npy')
 
-box.subgrid()
+x0, y0 = coords0[:, 0], coords0[:, 1] # units of Mpc
+x1, y1 = coords1[:, 0], coords1[:, 1]
 
-out = box.find_leaves(0)
-print(out)
+plt.scatter(x0, y0)
+plt.savefig('figures/step1.png')
+plt.close()
 
-print(box.com)
+plt.scatter(x1, y1)
+plt.savefig('figures/step2.png')
+plt.close()
+
+xs = np.array([x0, x1])
+ys = np.array([y0, y1])
+
+for _ in range(10):
+
+	box = Node(0, 10, 0, 10, 0, np.array([xs[-1, :], ys[-1, :]]).T)
+
+	box.subgrid()
+
+	leaves = box.accel_calc()
+
+	x_next, y_next = verlet(xs[-2, :], xs[-1, :], ys[-2, :], ys[-1, :], 1000, leaves)
+
+	idxs = np.where((x_next < 0) | (x_next > 10) | (y_next < 0) | (y_next > 10))
+
+	xs = np.delete(xs, idxs, axis=1)
+	ys = np.delete(ys, idxs, axis=1)
+	x_next = np.delete(x_next, idxs)
+	y_next = np.delete(y_next, idxs)
+
+	xs = np.append(xs, x_next[None, :], axis=0)
+	ys = np.append(ys, y_next[None, :], axis=0)
+
+	print(xs.shape)
+
+	plt.scatter(xs[-1, :], ys[-1, :])
+	plt.savefig('figures/step%d.png' % xs.shape[0])
+	plt.close()
+
+# things are working, but i keep losing particles :(
