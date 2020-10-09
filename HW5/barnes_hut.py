@@ -13,8 +13,16 @@ class Node:
 		self.particles = particles
 		self.children = []
 		self.leaf = False
-		self.com = 0
 		self.parent = parent
+
+		if self.particles.shape[0] == 0:
+			x_com, y_com = 0, 0
+
+		else:
+			x_com = np.sum(self.particles[:, 0])/(self.particles.shape[0])
+			y_com = np.sum(self.particles[:, 1])/(self.particles.shape[0])
+
+		self.com = np.array([x_com, y_com])
 
 	def subgrid(self):
 
@@ -109,7 +117,6 @@ class Node:
 			out += child.find_leaves(n)
 		return out
 
-
 coords = np.load('galaxies0.npy')
 
 x0, y0 = coords[:, 0], coords[:, 1] # units of Mpc
@@ -122,3 +129,5 @@ box.subgrid()
 
 out = box.find_leaves(0)
 print(out)
+
+print(box.com)
