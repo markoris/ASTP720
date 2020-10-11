@@ -139,7 +139,7 @@ class Node:
 			for beta in range(leaves.shape[0]): # all other particles
 				if alpha == beta: continue
 				r = (leaves[beta].particles[0] - leaves[alpha].particles[0]) * 1e6 #* 3.086e13 # Mpc to pc
-				ax += G * leaves[beta].mass * (-1/np.sqrt(np.abs(r[0] + eps)))*(r[0])/(np.abs(r[0])**2)
-				ay += G * leaves[beta].mass * (-1/np.sqrt(np.abs(r[1] + eps)))*(r[1])/(np.abs(r[1])**2)
+				ax += G * leaves[beta].mass * (-1/np.abs(r[0]**2 + eps**2))*(r[0])/(np.abs(r[0])**2)
+				ay += G * leaves[beta].mass * (-1/np.abs(r[1]**2 + eps**2))*(r[1])/(np.abs(r[1])**2)
 				leaves[alpha].accel = np.array([ax, ay])
 		return leaves
