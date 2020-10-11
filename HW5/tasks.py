@@ -4,6 +4,7 @@ import barnes_hut as bh
 import numpy as np
 import matplotlib.pyplot as plt
 
+plt.rc('font', size=12)
 
 def verlet(x0, x1, y0, y1, t, nodes):
 	'''
@@ -22,7 +23,10 @@ coords1 = np.load('galaxies1.npy')
 x0, y0 = coords0[:, 0], coords0[:, 1] # units of Mpc
 x1, y1 = coords1[:, 0], coords1[:, 1]
 
+plt.title('Step 1')
 plt.scatter(x0, y0)
+plt.xlabel('x (Mpc)')
+plt.ylabel('y (Mpc)')
 plt.savefig('figures/step1.png')
 plt.close()
 
@@ -56,6 +60,9 @@ for _ in range(10):
 	print(xs.shape)
 
 	plt.scatter(xs[-1, :], ys[-1, :])
+	plt.title('Step %d' % xs.shape[0])
+	plt.xlabel('x (Mpc)')
+	plt.ylabel('y (Mpc)')
 	plt.savefig('figures/step%d.png' % xs.shape[0])
 	plt.close()
 
@@ -85,6 +92,11 @@ for x in range(X.shape[0]):
 		phi[x, y] = phi1 + phi2 # adding potentials together
 
 plt.contour(X, Y, np.log10(phi))
-plt.show()
+cb = plt.colorbar()
+plt.title('Rough Cluster Potential Approximation')
+plt.xlabel('x (Mpc)')
+plt.ylabel('y (Mpc)')
+cb.set_label('log potential')
+plt.savefig('figures/potential.png')
 
 # --- End of Task 2

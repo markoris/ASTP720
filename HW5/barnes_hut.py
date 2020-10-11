@@ -132,7 +132,7 @@ class Node:
 		'''
 		leaves = self.return_leaves(np.array([]))
 		G = 4.301e-3 * (3.241e-14*3.154e7)**2 # pc M_sun^-1 (pc/yr)^2
-		eps = 1e-3 # Plummer radius for force softening
+		eps = 1e-3 # "Plummer" radius for force softening
 		for alpha in range(leaves.shape[0]): # particle being considered
 			ax = 0
 			ay = 0
