@@ -47,13 +47,15 @@ idxs = np.argsort(p)
 
 fit = theta[0] + theta[1]*p[idxs] + theta[2]*z[idxs]
 
-plt.plot(p[idxs], fit.T, 'r') # checking fit against data
-plt.scatter(p, m_j) 
+plt.plot(p[idxs], fit.T, 'r', label='fit') # checking fit against data
+plt.scatter(p, m_j, label='data') 
 plt.gca().invert_yaxis()
 plt.title('Cepheid Period-Luminosity-Metallicity Relation (no errors)')
 plt.xlabel('log Period (days)')
 plt.ylabel('Absolute Magnitude')
-#plt.show()
+plt.legend()
+plt.savefig('figures/no_errors.png')
+plt.close()
 
 # --- End of Task 2 ---
 
@@ -82,13 +84,15 @@ print(theta_errors)
 
 fit = theta[0] + theta[1]*p[idxs] + theta[2]*z[idxs]
 
-plt.plot(p[idxs], fit.T, 'r')
-plt.scatter(p, m_j) # verifying that trend resembles that in Fig 2 on hw
+plt.plot(p[idxs], fit.T, 'r', label='fit')
+plt.scatter(p, m_j, label='data') # verifying that trend resembles that in Fig 2 on hw
 plt.gca().invert_yaxis()
 plt.title('Cepheid Period-Luminosity-Metallicity Relation (with errors)')
 plt.xlabel('log Period (days)')
 plt.ylabel('Absolute Magnitude')
-#plt.show()
+plt.legend()
+plt.savefig('figures/with_errors.png')
+plt.close()
 
 # --- End of Task 3---
 
@@ -123,13 +127,14 @@ print(theta_nested_errors)
 
 fit_nested = theta_nested[0] + theta_nested[1]*p[idxs]
 
-plt.plot(p[idxs], fit_nested.T, 'r')
-plt.scatter(p, m_j) # verifying that trend resembles that in Fig 2 on hw
+plt.plot(p[idxs], fit_nested.T, 'r', label='fit')
+plt.scatter(p, m_j, label='data') # verifying that trend resembles that in Fig 2 on hw
 plt.gca().invert_yaxis()
 plt.title('Cepheid Period-Luminosity-Metallicity Relation (with errors)')
 plt.xlabel('log Period (days)')
 plt.ylabel('Absolute Magnitude')
-#plt.show()
+plt.legend()
+plt.savefig('figures/nested.png')
 
 fit = fit.T
 fit_nested = fit_nested.T
