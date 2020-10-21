@@ -8,9 +8,10 @@ def likelihood(times, fluxes, params):
 	sigma = 0.1
 	residual = fluxes - model(times, params)
 	residual /= sigma
-	residual = -0.5*np.sum(residual**2)
+	residual *= -0.5
 	residual = np.exp(residual)
-	residual *= 1/np.sqrt(2*np.pi*sigma**2)
+	residual *= 1/np.sqrt(2*np.pi*sigma) # Gaussian for array of times and fluxes
+	residual = np.sum(np.log(residual))  # log of Gaussian allows for summing over likelihood
 	return residual
 
 def model(times, params):
@@ -67,13 +68,15 @@ plt.plot(foldtime, lcbins)
 plt.plot(foldtime, sim)
 plt.show() # pretty good! could be better...
 
-for run in range(10):
+for run in range(1000):
 	proposal = np.random.multivariate_normal(params, np.identity(3), 1).flatten() # this is the Y vector, drawing from 3 different distributions, each with a mean at the current guess, with covariances = 1 on the diagonal
 
 	while (np.any(proposal < 0)) | (proposal[2] < proposal[1]) | (proposal[2] > foldtime[-1]): # ensure that all values must be positive, tmax must be > tmin, and tmax should not be greater than the length of the relevant portion of the folded light curve
 		proposal = np.random.multivariate_normal(params, np.identity(3), 1).flatten()          # if any of above conditions are not met, re-draw samples until they are
 
 	r = likelihood(foldtime, lcbins, proposal)/likelihood(foldtime, lcbins, params) # metropolis ratio, ratio of likelihood given new proposed parameters to likelihood of current proposed parameters
+
+	print(r)
 
 	if r >= 1: params = proposal # if ratio > 1, proposed parameters are more likely to fit the data than current parameters, set current parameters to be the proposed ones
 	if r < 1: 
