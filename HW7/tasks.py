@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+plt.rc('font', size=35)
+
 def likelihood(times, fluxes, params):
 	'''
 	gaussian likelihood evaluating how well model represents data
@@ -68,9 +70,13 @@ print(likelihood(foldtime, lcbins, params), likelihood(foldtime, lcbins, np.arra
 
 sim = model(foldtime, params) # boxcar representation of model given initial guess of parameters
 
-plt.plot(foldtime, lcbins)
-plt.plot(foldtime, sim)
-#plt.show() # pretty good! could be better...
+plt.plot(foldtime, lcbins, label='data')
+plt.plot(foldtime, sim, label='model')
+plt.title('Initial Guess Model vs. Data')
+plt.xlabel('Time (days)')
+plt.ylabel('Normalized Flux')
+plt.legend()
+plt.show() # pretty good first guess! could be better...
 plt.close()
 
 cov_mat = np.identity(3)
@@ -91,31 +97,37 @@ for run in range(1000):
 
 	r = likelihood(foldtime, lcbins, proposal)/likelihood(foldtime, lcbins, params) # metropolis ratio, ratio of likelihood given new proposed parameters to likelihood of current proposed parameters
 
-#	print(params, likelihood(foldtime, lcbins, params))
-#	print(proposal, likelihood(foldtime, lcbins, proposal))
-#	print(r)
-
-	if r >= 1: params = proposal # if ratio > 1, proposed parameters are more likely to fit the data than current parameters, set current parameters to be the proposed ones
-	dips = np.append(dips, params[0])
-	tmins = np.append(tmins, params[1])
-	tmaxs = np.append(tmaxs, params[2])
+	if r >= 1: 
+		params = proposal # if ratio > 1, proposed parameters are more likely to fit the data than current parameters, set current parameters to be the proposed ones
+		
 	if r < 1: 
 		threshold = np.minimum(1, r) # otherwise, use the ratio as the threshold for acceptance
 		check = np.random.uniform(0, 1, 1) # draw from uniform sample
 		if check <= threshold: # if random draw is less than the threshold, accept the parameters, otherwise keep parameters same and draw another proposed set of parameters on the next iteration
 			params = proposal
-			dips = np.append(dips, params[0])
-			tmins = np.append(tmins, params[1])
-			tmaxs = np.append(tmaxs, params[2])
 
-#plt.hist(dips, bins=50)
-#plt.show()
+	dips = np.append(dips, params[0])
+	tmins = np.append(tmins, params[1])
+	tmaxs = np.append(tmaxs, params[2])
 
-#plt.plot(np.linspace(1, dips.shape[0], dips.shape[0]), dips)
-#plt.show()
+plt.hist(dips, bins=50)
+plt.title('Transit Depth Histogram')
+plt.xlabel('Transit Depth Values')
+plt.ylabel('Frequency of Occurrence')
+plt.show()
+
+plt.plot(np.linspace(1, dips.shape[0], dips.shape[0]), dips)
+plt.title('Transit Depth Value Evolution')
+plt.xlabel('Iteration Number')
+plt.ylabel('Transit Depth Value')
+plt.show()
 
 print(params)
 
-plt.plot(foldtime, lcbins)
-plt.plot(foldtime, model(foldtime, params))
+plt.plot(foldtime, lcbins, label='data')
+plt.plot(foldtime, model(foldtime, params), label='model')
+plt.title('"Optimized" Model vs. Data')
+plt.xlabel('Time (days)')
+plt.ylabel('Normalized Flux')
+plt.legend()
 plt.show()
