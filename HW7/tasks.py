@@ -146,5 +146,5 @@ v_planet /= 86400 # days to seconds
 m_planet = m_star*v_star/v_planet # solar masses
 density = m_planet/(4./3*np.pi*r_planet**3) # solar masses per cubed solar radius
 density *= 1.989e33 # solar mass to grams
-density /= 6.9634e7**3 # solar radius to cm
+density /= 6.9634e10**3 # solar radius to cm
 print(density)
