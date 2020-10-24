@@ -131,3 +131,20 @@ plt.xlabel('Time (days)')
 plt.ylabel('Normalized Flux')
 plt.legend()
 plt.show()
+
+# --- End of Task 1 ---
+
+# --- Start of Bonus Task ---
+
+r_planet = np.sqrt(1.79**2*0.007) # solar radii
+v_star = 200 # m/s
+m_star = 1.35 # solar masses
+r_orbit = np.power((p/365)**2, 1./3) # AU
+v_planet = 2*np.pi*r_orbit/p # AU / day
+v_planet *= 1.496e11 # AU to meters
+v_planet /= 86400 # days to seconds
+m_planet = m_star*v_star/v_planet # solar masses
+density = m_planet/(4./3*np.pi*r_planet**3) # solar masses per cubed solar radius
+density *= 1.989e33 # solar mass to grams
+density /= 6.9634e7**3 # solar radius to cm
+print(density)
