@@ -136,8 +136,35 @@ plt.show()
 
 # --- Start of Bonus Task ---
 
+plt.rc('font', size=30)
+
+time, rv = np.loadtxt('RV_data.txt', unpack=True, usecols=(0, 1))
+
+tmin = time[0]
+tmax = time[-1]
+
+time -= tmin
+time = time % p
+time /= p
+time -= 0.5
+
+def sinemodel(t, omega, A, phi):
+	return A*np.sin(omega*t + phi)
+
+faketime = np.linspace(time[0], time[-1], 1000)
+
+A, omega, phi = 265, 5, -1.5
+
+plt.title('Radial Velocity vs. Orbital Phase')
+plt.ylabel('Velocity (m/s)')
+plt.xlabel('Orbital Phase')
+plt.scatter(time, rv, s=500, label='data')
+plt.plot(faketime, sinemodel(faketime, omega, A, phi), 'r', lw=3, label='model')
+plt.legend()
+plt.show()
+
 r_planet = np.sqrt(1.79**2*0.007) # solar radii
-v_star = 200 # m/s
+v_star = A # m/s
 m_star = 1.35 # solar masses
 r_orbit = np.power((p/365)**2, 1./3) # AU
 v_planet = 2*np.pi*r_orbit/p # AU / day
