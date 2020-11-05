@@ -84,6 +84,8 @@ peak_freq = freq[np.argmax(transform[np.where((freq > 0.001) & (freq < 0.004))])
 peak = transform[np.argmax(transform[np.where((freq > 0.001) & (freq < 0.004))])+offset]
 peak /= strain.shape[0] # divide by N to normalize amplitude
 
+print("frequency = ", peak_freq, "hz, amplitude = ", peak)
+
 peak_freq /= 1e-4 # this value is equal to sqrt(M/M_sun) * (R/R_sun)^(-3/2) or M^1/2 = freq * R^3/2
 peak /= 2.6e-21 # this value is equal to (M/M_sun)^2 * (D/pc)^(-1) * (R/R_sun)^(-1)
 peak *= 12 # this  value is (M/M_sun)^2 (R/R_sun)^(-1), or alternatively, M^2 = peak * R
