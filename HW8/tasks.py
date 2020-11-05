@@ -32,30 +32,33 @@ def fft(inputs):
 
 	w = [np.exp(-2j*np.pi*k/N) for k in range(N)] # calculate w for each of the indices
 
-	return np.append(fft_even + w[:N//2]*fft_odd, fft_even + w[N//2:]*fft_odd) # appending second half to ensure that array size is maintained throughout recursion
+	return np.append(fft_even + w[:N//2]*fft_odd, fft_even + w[N//2:]*fft_odd) # appending second half to ensure that array size is maintained throughout recursion, but we only need the frequencies relevant to the first half of the array
 
 
-## --- Start of Consistency Test --- #
-#
-#time = np.linspace(0, 15, 2**10)
-#sine = np.sin(2*np.pi*6*time)
-#
-#freq = time2freq(time)
-#
-#sine_fft = dft(sine)[:freq.shape[0]]
-#
-#good_fft  = np.real(np.fft.fft(sine)[:freq.shape[0]])
-#
-#sine_copy = np.copy(sine)
-#
-#transform = fft(sine_copy)
-#
-#plt.plot(freq, sine_fft, 'k')
-#plt.plot(freq, good_fft, 'r')
-#plt.plot(freq, transform[:511], 'b')
-#plt.show() # all 3 methods should produce roughly the same output
-#
-## --- End of Consistency Test --- #
+# --- Start of Consistency Test --- #
+
+time = np.linspace(0, 15, 2**10)
+sine = np.sin(2*np.pi*6*time)
+
+freq = time2freq(time)
+
+sine_dft = dft(sine)[:freq.shape[0]]
+
+good_fft  = np.real(np.fft.fft(sine)[:freq.shape[0]])
+
+sine_copy = np.copy(sine)
+
+transform = fft(sine_copy)
+
+plt.plot(freq, sine_dft, 'k', label='DFT')
+plt.plot(freq, transform[:511], 'b', label='Cooley-Tukey FFT')
+plt.plot(freq, good_fft, 'r', label='Numpy FFT')
+plt.title('Comparison of Fourier Transform Methods for Sin(2*pi*6*t')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Amplitude')
+plt.show() # all 3 methods should produce roughly the same output
+
+# --- End of Consistency Test --- #
 
 # --- Start of Task 1 --- #
 
