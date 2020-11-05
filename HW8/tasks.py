@@ -53,9 +53,10 @@ transform = fft(sine_copy)
 plt.plot(freq, sine_dft, 'k', label='DFT')
 plt.plot(freq, transform[:511], 'b', label='Cooley-Tukey FFT')
 plt.plot(freq, good_fft, 'r', label='Numpy FFT')
-plt.title('Comparison of Fourier Transform Methods for Sin(2*pi*6*t')
+plt.title('Comparison of Fourier Transform Methods for Sin(2*pi*6*t)')
 plt.xlabel('Frequency (Hz)')
 plt.ylabel('Amplitude')
+plt.legend()
 plt.show() # all 3 methods should produce roughly the same output
 
 # --- End of Consistency Test --- #
