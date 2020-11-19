@@ -42,7 +42,8 @@ def lnprior(theta):
     -------
     Value of log-prior.
     """
-    if np.all(np.abs(theta) < 1): return 0
+#    if np.all(np.abs(theta) < 1): return 0
+    if np.all((np.abs(theta[:3]) < 1) & (theta[3] > 0)): return 0
     return -np.inf
 #    return np.where(np.abs(theta) <= 1, 0, -np.inf)
 
@@ -66,11 +67,13 @@ def lnlike(theta, data):
     Value of log-likelihood
     """
     mean = np.mean(data)
-    sigma_z = 1
+#    sigma_z = 1
+    sigma_z = theta[3]
     residuals = np.zeros(len(data)-121)  # 3141 entries
     for idx in np.arange(121, len(data)):
     	residuals[idx-121] = (data[idx]-mean) - theta[0]*(data[idx-1]-mean) - theta[1]*(data[idx-12]-mean) - theta[2]*(data[idx-121]-mean) # entry 0 of residuals = entry 121 - entry 120 - entry 109 - entry 0
     residuals = -np.sum(residuals**2)/(2*sigma_z**2)
+    residuals += -(len(data)-121)/2*np.log(2*np.pi*sigma_z**2)
     return residuals
 
 """
@@ -98,7 +101,7 @@ niter = 5000
 # and your initial guesses for a, b, and c were 5, 3, and 8, respectively, then you would write
 # pinit = np.array([5, 3, 8])
 # Make sure the guesses are allowed inside your lnprior range!
-pinit = np.array([0.05, 0.05, 0.50])
+pinit = np.array([0.05, 0.05, 0.50, 1])
 # Number of dimensions of parameter space
 ndim = len(pinit)
 # Perturbed set of initial guesses. Have your walkers all start out at
