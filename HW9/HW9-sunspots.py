@@ -42,10 +42,8 @@ def lnprior(theta):
     -------
     Value of log-prior.
     """
-#    if np.all(np.abs(theta) < 1): return 0
-    if np.all((np.abs(theta[:3]) < 1) & (theta[3] > 0) & (theta[3] < 100)): return 0
+    if np.all((np.abs(theta[:3]) < 1) & (theta[3] > 0) & (theta[3] < 100)): return 0 # keep phi values between -1 and 1 and keep sigma_z within reasonable values
     return -np.inf
-#    return np.where(np.abs(theta) <= 1, 0, -np.inf)
 
 
 
@@ -67,13 +65,12 @@ def lnlike(theta, data):
     Value of log-likelihood
     """
     mean = np.mean(data)
-#    sigma_z = 1
     sigma_z = theta[3]
     residuals = np.zeros(len(data)-132)  # 3141 entries
     for idx in np.arange(132, len(data)):
     	residuals[idx-132] = (data[idx]-mean) - theta[0]*(data[idx-1]-mean) - theta[1]*(data[idx-12]-mean) - theta[2]*(data[idx-132]-mean) # entry 0 of residuals = entry 132 - entry 120 - entry 109 - entry 0
-    residuals = -np.sum(residuals**2)/(2*sigma_z**2)
-    residuals += -(len(data)-132)/2*np.log(2*np.pi*sigma_z**2)
+    residuals = -np.sum(residuals**2)/(2*sigma_z**2) # scaling factor
+    residuals += -(len(data)-132)/2*np.log(2*np.pi*sigma_z**2) # ensures that sigma_z doesn't blow up
     return residuals
 
 """
@@ -143,13 +140,12 @@ burn = int(0.25*niter)
 # Reshape the chains for input to corner.corner()
 samples = sampler.chain[:, burn:, :].reshape((-1, ndim))
 
-new_theta = np.mean(samples, axis=0)
-print(new_theta)
-model = np.zeros(len(ssn)-132)  # 3141 entries
+new_theta = np.mean(samples, axis=0) # find mean value for the best-fit parameters from the posteriors
+model = np.zeros(len(ssn)-132)  
 residuals = np.zeros_like(model)
 for idx in np.arange(132, len(ssn)):
-	residuals[idx-132] = (ssn[idx]) - new_theta[0]*(ssn[idx-1]) - new_theta[1]*(ssn[idx-12]) - new_theta[2]*(ssn[idx-132])
-	model[idx-132] = new_theta[0]*(ssn[idx-1]) + new_theta[1]*(ssn[idx-12]) + new_theta[2]*(ssn[idx-132])
+	residuals[idx-132] = (ssn[idx]) - new_theta[0]*(ssn[idx-1]) - new_theta[1]*(ssn[idx-12]) - new_theta[2]*(ssn[idx-132]) # residuals = data - model
+	model[idx-132] = new_theta[0]*(ssn[idx-1]) + new_theta[1]*(ssn[idx-12]) + new_theta[2]*(ssn[idx-132]) # just the model component, to see whether it matches up with data
 
 plot(decyear[132:], ssn[132:], 'k.', label='data')
 plot(decyear[132:], residuals, 'r.', label='residual')
@@ -190,20 +186,20 @@ show()
 Creating FFT of the model to highlight most prominent frequencies (expected at 1 month, 1 year, and 11 years)
 """
 
-def time2freq(time):
+def time2freq(time): # stolen from HW8
 	samp_time = np.mean(np.diff(time))
 	samp_freq = 1/samp_time
 	samp_freq /= 2 # Nyquist limit
 	freq = np.linspace(0, 1, np.floor(time.shape[0]/2.).astype(int)-1)*samp_freq
 	return freq
 
-freq = time2freq(decyear[132:]*2.628e6) # months to seconds
+freq = time2freq(decyear[132:]*2.628e6) # convert months to seconds
 mean = np.mean(model)
-model -= mean
+model -= mean # subtract mean to eliminate low-frequency noise since most of the relevant timescales in this problem are LONG
 fft = np.real(np.fft.fft(model))
 fft *= 2
-fft = fft**2
-plot(freq, fft[:1564])
+fft = fft**2 # taking single-sided power spectrum
+plot(freq, fft[:1564]) # remove the mirrored portion
 title('FFT of model')
 xlabel('Frequency (Hz)')
 ylabel('Amplitude')
@@ -223,7 +219,7 @@ while decyear[-1] < 2050:
 	model = np.append(model, new_theta[0]*(model[idx-1]) + new_theta[1]*(model[idx-12]) + new_theta[2]*(model[idx-132]))
 	#	mean, std = new_theta[0]*(model[idx-1]) + new_theta[1]*(model[idx-12]) + new_theta[2]*(model[idx-132]), new_theta[3]
 	#	draw = np.random.normal(mean, std, 1) # the predicted value is drawn from a Gaussian with mean value predicted by the model and a noise term characterized by sigma_z
-	#	model = np.append(model, draw)
+	#	model = np.append(model, draw) # this is where I attempted to use sigma_z, but it didn't work :(
 
 plot(decyear[132:ssn.shape[0]], ssn[132:], 'k.')
 plot(decyear[132:], model, 'r.')
