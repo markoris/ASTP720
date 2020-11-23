@@ -43,7 +43,7 @@ def lnprior(theta):
     Value of log-prior.
     """
 #    if np.all(np.abs(theta) < 1): return 0
-    if np.all((np.abs(theta[:3]) < 1) & (theta[3] > 0)): return 0
+    if np.all((np.abs(theta[:3]) < 1) & (theta[3] > 0) & (theta[3] < 100)): return 0
     return -np.inf
 #    return np.where(np.abs(theta) <= 1, 0, -np.inf)
 
@@ -69,11 +69,11 @@ def lnlike(theta, data):
     mean = np.mean(data)
 #    sigma_z = 1
     sigma_z = theta[3]
-    residuals = np.zeros(len(data)-121)  # 3141 entries
-    for idx in np.arange(121, len(data)):
-    	residuals[idx-121] = (data[idx]-mean) - theta[0]*(data[idx-1]-mean) - theta[1]*(data[idx-12]-mean) - theta[2]*(data[idx-121]-mean) # entry 0 of residuals = entry 121 - entry 120 - entry 109 - entry 0
+    residuals = np.zeros(len(data)-132)  # 3141 entries
+    for idx in np.arange(132, len(data)):
+    	residuals[idx-132] = (data[idx]-mean) - theta[0]*(data[idx-1]-mean) - theta[1]*(data[idx-12]-mean) - theta[2]*(data[idx-132]-mean) # entry 0 of residuals = entry 132 - entry 120 - entry 109 - entry 0
     residuals = -np.sum(residuals**2)/(2*sigma_z**2)
-    residuals += -(len(data)-121)/2*np.log(2*np.pi*sigma_z**2)
+    residuals += -(len(data)-132)/2*np.log(2*np.pi*sigma_z**2)
     return residuals
 
 """
@@ -101,7 +101,8 @@ niter = 5000
 # and your initial guesses for a, b, and c were 5, 3, and 8, respectively, then you would write
 # pinit = np.array([5, 3, 8])
 # Make sure the guesses are allowed inside your lnprior range!
-pinit = np.array([0.05, 0.05, 0.50, 1])
+#pinit = np.array([0.05, 0.05, 0.50])
+pinit = np.array([0.05, 0.05, 0.50, 10])
 # Number of dimensions of parameter space
 ndim = len(pinit)
 # Perturbed set of initial guesses. Have your walkers all start out at
@@ -118,7 +119,6 @@ plot(decyear, ssn, 'k.')
 xlabel('Year')
 ylabel('Sunspot Number')
 show()
-
 
 """
 ## Run the sampler
@@ -145,12 +145,22 @@ samples = sampler.chain[:, burn:, :].reshape((-1, ndim))
 
 new_theta = np.mean(samples, axis=0)
 print(new_theta)
-model = np.zeros(len(ssn)-121)  # 3141 entries
-for idx in np.arange(121, len(ssn)):
-	model[idx-121] = (ssn[idx]) - new_theta[0]*(ssn[idx-1]) - new_theta[1]*(ssn[idx-12]) - new_theta[2]*(ssn[idx-121])
+model = np.zeros(len(ssn)-132)  # 3141 entries
+residuals = np.zeros_like(model)
+for idx in np.arange(132, len(ssn)):
+	residuals[idx-132] = (ssn[idx]) - new_theta[0]*(ssn[idx-1]) - new_theta[1]*(ssn[idx-12]) - new_theta[2]*(ssn[idx-132])
+	model[idx-132] = new_theta[0]*(ssn[idx-1]) + new_theta[1]*(ssn[idx-12]) + new_theta[2]*(ssn[idx-132])
 
-plot(decyear[121:], ssn[121:], 'k.')
-plot(decyear[121:], model, 'r.')
+plot(decyear[132:], ssn[132:], 'k.', label='data')
+plot(decyear[132:], residuals, 'r.', label='residual')
+title('Residual Comparison to Data')
+xlabel('Year')
+ylabel('Sunspot Number')
+show()
+
+plot(decyear[132:], ssn[132:], 'k.', label='data')
+plot(decyear[132:], model, 'r.', label='fit')
+title('Model Fit Comparison to Data')
 xlabel('Year')
 ylabel('Sunspot Number')
 show()
@@ -169,7 +179,54 @@ and that will make the appropriate label in LaTeX (if the distribution is
 installed correctly) for the two 1D posteriors of the corner plot.
 """
 
+labels = [r"$\phi_1$", r"$\phi_{12}$", r"$\phi_{132}$", r"$\sigma_z$"]
+
 fig = corner.corner(samples, bins=50, color='C0', smooth=0.5, plot_datapoints=False, plot_density=True, \
-                    plot_contours=True, fill_contour=False, show_titles=True)#, labels=labels)
+                    plot_contours=True, fill_contour=False, show_titles=True, labels=labels)
 fig.savefig("corner.png")
+show()
+
+"""
+Creating FFT of the model to highlight most prominent frequencies (expected at 1 month, 1 year, and 11 years)
+"""
+
+def time2freq(time):
+	samp_time = np.mean(np.diff(time))
+	samp_freq = 1/samp_time
+	samp_freq /= 2 # Nyquist limit
+	freq = np.linspace(0, 1, np.floor(time.shape[0]/2.).astype(int)-1)*samp_freq
+	return freq
+
+freq = time2freq(decyear[132:]*2.628e6) # months to seconds
+mean = np.mean(model)
+model -= mean
+fft = np.real(np.fft.fft(model))
+fft *= 2
+fft = fft**2
+plot(freq, fft[:1564])
+title('FFT of model')
+xlabel('Frequency (Hz)')
+ylabel('Amplitude')
+xlim([0, 1e-7])
+show()
+
+
+"""
+Prediction up until 2050
+"""
+
+model += mean # restore model to proper values prior to mean-subtraction for FFT
+
+while decyear[-1] < 2050:
+	idx = model.shape[0]
+	decyear = np.append(decyear, decyear[-1]+1./12) # add one month in decimal format
+	model = np.append(model, new_theta[0]*(model[idx-1]) + new_theta[1]*(model[idx-12]) + new_theta[2]*(model[idx-132]))
+	#	mean, std = new_theta[0]*(model[idx-1]) + new_theta[1]*(model[idx-12]) + new_theta[2]*(model[idx-132]), new_theta[3]
+	#	draw = np.random.normal(mean, std, 1) # the predicted value is drawn from a Gaussian with mean value predicted by the model and a noise term characterized by sigma_z
+	#	model = np.append(model, draw)
+
+plot(decyear[132:ssn.shape[0]], ssn[132:], 'k.')
+plot(decyear[132:], model, 'r.')
+xlabel('Year')
+ylabel('Sunspot Number')
 show()
