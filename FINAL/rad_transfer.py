@@ -13,6 +13,9 @@ Assumptions:
 - 
 '''
 
+def gaussian(x, mu, sigma):
+	return 1./np.sqrt(2*np.pi*sigma**2)*np.exp(-(x - mu)**2/(2*sigma**2))
+
 def planck(wav, T):
 	h = 6.626e-34 # J s
 	c = 2.998e8 # m / s
@@ -27,13 +30,19 @@ wavelengths = 'ugrizyJHK'
 colors = {"K":"darkred", "H":"red", "J":"orange", "y":"gold", "z":"greenyellow", "i":"green", "r":"lime", "g":"cyan", "u":"blue"}
 classifications = 'OBAFGKMLTY'
 temps = np.array([40000, 20000, 8750, 6750, 5600, 4450, 3050, 1850, 1000, 600]) # effective temperature at stellar surface for OBAFGKMLTY star
+wav = np.array([365, 476, 621, 754, 900, 1020, 1220, 1630, 2190])*1e-9 # ugrizyJHK
+ds = 0.1
+rel_diff = 1e-2
+u = np.loadtxt('filters/bess-u.pass', unpack=True).T # taken from Michael Richmond's ASTP-613 notes on optical detectors (week 7B)
+r = np.loadtxt('filters/bess-r.pass', unpack=True).T
+i = np.loadtxt('filters/bess-i.pass', unpack=True).T
+filters = np.array([u, r, i])
 verbose = True
+filter_to_wav = {0: 0, 1: 2, 2:3} # first filter is u, translate to first wavelength in wav, second filter is r, translate to third wavelength in wav, etc...
+qe1, qe2 = np.random.uniform(0.5, 1), np.random.uniform(0, 0.5)
 
 for T in temps:
-	wav = np.array([365, 476, 621, 754, 900, 1020, 1220, 1630, 2190])*1e-9 # grizyJHK
-	ds = 0.1
-	rel_diff = 1e-4
-	
+
 	intensity = planck(wav, T)*np.random.uniform(10, 100)
 	dist = np.array([ds])
 	
@@ -54,5 +63,20 @@ for T in temps:
 		plt.plot(dist, intensity[:, idx], colors[wavelengths[idx]], label=wavelengths[idx])
 	plt.legend()
 	plt.yscale('log')
-	plt.savefig('%s.png' % classifications[int(np.where(temps==T)[0])])
+	plt.savefig('figures/%s.png' % classifications[int(np.where(temps==T)[0])])
 	plt.close()
+
+	for idx in range(filters.shape[0]):
+		filt = filters[idx]
+		if T == temps[0]:
+			filt[:, 0] /= 10 # convert from Angstroms to actual nanometers
+			filt[:, 0] *= 1e-9
+		cutoff_wav = 0.6e-6 # above 600 nanometers, your CCD suddenly drops in quantum efficiency for some reason (probably a grad student made a mistake)
+		quantum_efficiency = np.piecewise(filt[:, 0], [filt[:, 0] <= cutoff_wav, filt[:, 0] > cutoff_wav], [qe1, qe2])
+		transmissivity = np.zeros_like(filt[:, 0])
+		transmissivity[np.where(filt[:, 0] < cutoff_wav)[0]] = filt[np.where(filt[:, 0] < cutoff_wav)[0], 1]*quantum_efficiency[0]
+		transmissivity[np.where(filt[:, 0] >= cutoff_wav)[0]] = filt[np.where(filt[:, 0] >= cutoff_wav)[0], 1]*quantum_efficiency[-1]
+		plt.yscale('log')
+		plt.plot(filt[:, 0], transmissivity*intensity[-1, filter_to_wav[idx]])
+		plt.show()
+	
