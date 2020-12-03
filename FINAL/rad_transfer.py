@@ -53,17 +53,19 @@ def I_next(I_now, alpha, ds, wav, T):
 
 ### Setting up values to be used in the finite difference loop
 
+plt.rc('font', size=30)
+plt.rc('lines', lw=3)
 wavelengths = 'ugrizyJHK' # letter representations of all the filters 
 colors = {"K":"darkred", "H":"red", "J":"orange", "y":"gold", "z":"greenyellow", "i":"green", "r":"lime", "g":"cyan", "u":"blue"} # plotting colors chosen logically with shorter wavelengths being bluer and longer wavelengths being redder
 classifications = 'OBAFGKMLTY' # stellar classifications 
 temps = np.array([40000, 20000, 8750, 6750, 5600, 4450, 3050, 1850, 1000, 600]) # effective temperature at stellar surface for OBAFGKMLTY star
 wav = np.array([365, 476, 621, 754, 900, 1020, 1220, 1630, 2190])*1e-9 # ugrizyJHK filter wavelengths
-ds = 0.1 # step size
+ds = 0.1 # step size in meters
 rel_diff = 1e-2 # relative difference requirement between subsquent steps; if the value of (s_{i} - {s_i+1})/s_{i} is less than this, the evaluation is terminated
 u = np.loadtxt('filters/bess-u.pass', unpack=True).T # taken from Michael Richmond's ASTP-613 notes on optical detectors (week 7B)
 r = np.loadtxt('filters/bess-r.pass', unpack=True).T
 i = np.loadtxt('filters/bess-i.pass', unpack=True).T
-filters = np.array([u, r, i]) # the three filter considered for the camera portion
+filters = np.array([u, r, i], dtype=object) # the three filter considered for the camera portion
 verbose = True # whether or not to print early termination warning
 filter_to_wav = {0: 0, 1: 2, 2:3} # first filter is u, translate to first wavelength in wav, second filter is r, translate to third wavelength in wav, etc...
 qe1, qe2 = np.random.uniform(0.5, 1), np.random.uniform(0, 0.5) # quantum efficiences, with the first one (shorter wavelengths) arbitrarily chosen to be higher and the second one (longer wavelengths) arbitrarily chosen to be lower
@@ -94,6 +96,9 @@ for T in temps: # looping over temperatures
 		plt.plot(dist, intensity[:, idx], colors[wavelengths[idx]], label=wavelengths[idx]) # plot the intensity as a function of distance for each of the wavelengths in the wav array
 	plt.legend()
 	plt.yscale('log') # log-scale y-axis represents the change in intensity in a more meaningful way
+	plt.xlabel(r'$s$')
+	plt.ylabel(r'$I(\lambda, T)$')
+	plt.title('%s Star Intensities at Given Wavelengths' % classifications[int(np.where(temps==T)[0])])
 	plt.savefig('figures/%s.png' % classifications[int(np.where(temps==T)[0])])
 	plt.close()
 
@@ -109,7 +114,11 @@ for T in temps: # looping over temperatures
 		transmissivity = np.zeros_like(filt[:, 0]) # initialize the transmissivity array
 		transmissivity[np.where(filt[:, 0] < cutoff_wav)[0]] = filt[np.where(filt[:, 0] < cutoff_wav)[0], 1]*quantum_efficiency[0] # transmissivity is the product of the quantum efficiency times the filter's throughput
 		transmissivity[np.where(filt[:, 0] >= cutoff_wav)[0]] = filt[np.where(filt[:, 0] >= cutoff_wav)[0], 1]*quantum_efficiency[-1]
+		plt.figure(figsize=(19.2, 10.8))
+		plt.xlabel(r'$\lambda$')
+		plt.ylabel(r'$I(\lambda, T)$')
+		plt.title('%s Star Intensities at Given Wavelengths Viewed by Camera' % classifications[int(np.where(temps==T)[0])])
 		plt.yscale('log')
 		plt.plot(filt[:, 0], transmissivity*intensity[-1, filter_to_wav[idx]]) # plot the last value of the intensity (where the finite differencing terminated) times the throughput of the camera + filters
 #		plt.show()
-	
+		plt.close()	
